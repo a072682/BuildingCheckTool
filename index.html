@@ -729,13 +729,18 @@
       startTimer();
       startVisualizer();
 
+      let restartCount = 0;
+      const MAX_RESTART = 5;
+
       recognition = new SpeechRecognition();
       recognition.lang = 'zh-TW';
       recognition.interimResults = true;
       recognition.continuous = true;
       recognition.maxAlternatives = 1;
 
+      // 有說話時重置重啟計數
       recognition.onresult = (e) => {
+        restartCount = 0;
         let interim = '';
         for (let i = e.resultIndex; i < e.results.length; i++) {
           const t = e.results[i][0].transcript;
@@ -744,26 +749,42 @@
         }
         transcriptEmpty.style.display = 'none';
         transcriptText.innerHTML =
-          `<span>${finalText}</span>` +
-          (interim ? `<span class="interim-text">${interim}</span>` : '');
+          '<span>' + finalText + '</span>' +
+          (interim ? '<span class="interim-text">' + interim + '</span>' : '');
       };
 
+      // no-speech / network 不立即重啟，等候較長時間，避免頻繁觸發提示音
       recognition.onerror = (e) => {
-        console.error('Speech error:', e.error);
-        if (e.error === 'no-speech') return;
-        let msg = '';
-        if (e.error === 'not-allowed') msg = '⚠️ 麥克風權限被拒絕，請在網址列左側解除封鎖';
-        else if (e.error === 'network') msg = '⚠️ 網路錯誤，請確認網路連線後重試';
-        else if (e.error !== 'aborted') msg = '⚠️ 錯誤：' + e.error;
-        if (msg) {
-          transcriptEmpty.style.display = 'none';
-          transcriptText.innerHTML = '<span style="color:#f06464;font-family:sans-serif;font-size:0.9rem">' + msg + '</span>';
+        if (e.error === 'aborted') return;
+        if (e.error === 'no-speech') return; // onend 會處理重啟
+        if (e.error === 'network') {
+          if (isRecording && restartCount < MAX_RESTART) {
+            restartCount++;
+            setTimeout(() => { try { recognition.start(); } catch(err) {} }, 2500);
+          } else if (isRecording) {
+            transcriptEmpty.style.display = 'none';
+            transcriptText.innerHTML = '<span style="color:#f0c864;font-size:0.9rem">⚠️ 網路不穩，請停止後重新錄音</span>';
+          }
+          return;
         }
-        if (e.error !== 'aborted') stopRecording();
+        if (e.error === 'not-allowed') {
+          transcriptEmpty.style.display = 'none';
+          transcriptText.innerHTML = '<span style="color:#f06464;font-size:0.9rem">⚠️ 麥克風權限被拒絕</span>';
+        }
+        stopRecording();
       };
 
+      // onend：靜音超時後重啟，加長延遲減少提示音
       recognition.onend = () => {
-        if (isRecording) recognition.start(); // keep alive
+        if (!isRecording) return;
+        if (restartCount < MAX_RESTART) {
+          restartCount++;
+          setTimeout(() => { try { recognition.start(); } catch(err) {} }, 800);
+        } else {
+          // 達上限後冷卻 2 秒再重啟，並重置計數
+          restartCount = 0;
+          setTimeout(() => { try { recognition.start(); } catch(err) {} }, 2000);
+        }
       };
 
       recognition.start();
