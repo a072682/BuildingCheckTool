@@ -22,22 +22,16 @@
     }
     html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
     body{display:flex;flex-direction:column;align-items:center;min-height:100dvh;padding:0 20px 48px}
-
     header{width:100%;max-width:640px;padding:32px 0 20px;display:flex;align-items:center;gap:12px}
     header h1{font-family:'Noto Serif TC',serif;font-size:clamp(1.4rem,5vw,2rem);font-weight:600}
     .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-left:auto;animation:pulse 2s ease-in-out infinite}
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-
     main{width:100%;max-width:640px;display:flex;flex-direction:column;gap:20px;flex:1}
-
-    /* 狀態列 */
     .status-row{display:flex;align-items:center;gap:8px;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
     .status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .3s,box-shadow .3s;flex-shrink:0}
     .status-dot.rec{background:var(--danger);box-shadow:0 0 8px var(--danger);animation:blink 1s ease-in-out infinite}
     .status-dot.done{background:var(--accent);box-shadow:0 0 8px var(--accent)}
     @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-
-    /* 錄音按鈕 */
     .record-area{display:flex;flex-direction:column;align-items:center;gap:14px;padding:10px 0}
     .timer{font-size:.8rem;letter-spacing:.2em;color:var(--muted);font-variant-numeric:tabular-nums}
     .timer.on{color:var(--danger)}
@@ -55,8 +49,6 @@
     .record-btn.rec .icon-stop{display:block}
     .record-label{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
     .record-label.rec{color:var(--danger)}
-
-    /* 結果框 */
     .result-section{display:flex;flex-direction:column;gap:10px}
     .result-header{display:flex;align-items:center;justify-content:space-between}
     .section-label{font-size:.65rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
@@ -68,12 +60,8 @@
     .hint{color:var(--muted);font-size:.75rem;letter-spacing:.08em;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;pointer-events:none}
     .result-text{font-family:'Noto Serif TC',serif;font-size:1.05rem;line-height:1.9;color:var(--text);white-space:pre-wrap;word-break:break-word}
     .interim{color:var(--muted);font-style:italic}
-
-    /* 錯誤 */
     .error-box{display:none;background:#1a0f0f;border:1px solid var(--danger);border-radius:10px;padding:14px 16px;font-size:.78rem;color:#f0a0a0;line-height:1.6}
     .error-box.on{display:block}
-
-    /* 歷史 */
     .history-section{display:none;flex-direction:column;gap:10px}
     .history-section.on{display:flex}
     .history-list{display:flex;flex-direction:column;gap:8px}
@@ -84,18 +72,13 @@
   </style>
 </head>
 <body>
-
 <header><h1>聲轉文字</h1><div class="dot"></div></header>
-
 <main>
-
   <div class="status-row">
     <div class="status-dot" id="statusDot"></div>
     <span id="statusText">待機中</span>
   </div>
-
   <div class="error-box" id="errorBox"></div>
-
   <div class="record-area">
     <div class="timer" id="timer">00:00</div>
     <button class="record-btn" id="recordBtn" aria-label="錄音">
@@ -113,7 +96,6 @@
     </button>
     <div class="record-label" id="recordLabel">按下錄音</div>
   </div>
-
   <div class="result-section">
     <div class="result-header">
       <span class="section-label">辨識結果</span>
@@ -124,14 +106,11 @@
       <div class="result-text" id="resultText"></div>
     </div>
   </div>
-
   <div class="history-section" id="historySection">
     <span class="section-label">歷史紀錄</span>
     <div class="history-list" id="historyList"></div>
   </div>
-
 </main>
-
 <script>
   const recordBtn      = document.getElementById('recordBtn');
   const recordLabel    = document.getElementById('recordLabel');
@@ -146,7 +125,6 @@
   const historySection = document.getElementById('historySection');
   const historyList    = document.getElementById('historyList');
 
-  // ── 檢查支援 ──
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
     errorBox.textContent = '⚠️ 此瀏覽器不支援語音辨識，請使用 Android Chrome';
@@ -165,16 +143,18 @@
   }
   function stopTimer() { clearInterval(timerInterval); timerEl.classList.remove('on'); }
 
-  // ── 狀態 ──
   function setStatus(state, label) {
     statusDot.className = 'status-dot' + (state ? ' '+state : '');
     statusText.textContent = label;
   }
+  function showError(msg) { errorBox.textContent = msg; errorBox.classList.add('on'); }
+  function clearError()   { errorBox.classList.remove('on'); }
 
-  // ── 主邏輯 ──
-  let isRecording = false;
-  let recognition = null;
-  let finalText = '';
+  // ── 核心狀態：用 instanceId 防止舊實例污染 ──
+  let isRecording  = false;
+  let recognition  = null;
+  let finalText    = '';
+  let instanceId   = 0; // 每次開新錄音就遞增，舊的 onend/onresult 對不上就忽略
 
   recordBtn.addEventListener('click', () => {
     isRecording ? stopRecording() : startRecording();
@@ -190,13 +170,31 @@
     copyBtn.classList.remove('on');
     resultBox.classList.remove('has-text');
 
-    recognition = new SR();
-    recognition.lang = 'zh-TW';
-    recognition.interimResults = true;
-    recognition.continuous = true;
-    recognition.maxAlternatives = 1;
+    isRecording = true;
+    instanceId++;             // 新的 session，舊的 onend callback 看到 id 不符就不重啟
+    spawnRecognition(instanceId);
 
-    recognition.onresult = e => {
+    recordBtn.classList.add('rec');
+    recordLabel.textContent = '點擊停止';
+    recordLabel.classList.add('rec');
+    setStatus('rec', '錄音中');
+    startTimer();
+  }
+
+  function spawnRecognition(id) {
+    // 如果這個 id 已經不是當前 session，直接放棄
+    if (id !== instanceId || !isRecording) return;
+
+    const r = new SR();
+    recognition = r;
+
+    r.lang = 'zh-TW';
+    r.interimResults = true;
+    r.continuous = false;   // 改為 false：每次說一句自動結束，避免 continuous 造成的重複
+    r.maxAlternatives = 1;
+
+    r.onresult = e => {
+      if (id !== instanceId) return; // 舊實例的結果，丟棄
       let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
@@ -209,49 +207,33 @@
       resultBox.classList.add('has-text');
     };
 
-    recognition.onerror = e => {
+    r.onerror = e => {
+      if (id !== instanceId) return;
       if (e.error === 'no-speech' || e.error === 'aborted') return;
-      if (e.error === 'not-allowed') {
-        showError('❌ 麥克風權限被拒絕，請在網址列允許麥克風');
-        stopRecording(); return;
-      }
-      if (e.error === 'network') {
-        showError('❌ 網路錯誤，請確認連線後重試');
-        stopRecording(); return;
-      }
+      if (e.error === 'not-allowed') { showError('❌ 麥克風權限被拒絕'); stopRecording(); return; }
+      if (e.error === 'network')     { showError('❌ 網路錯誤，請確認連線'); stopRecording(); return; }
       showError('❌ 辨識錯誤：' + e.error);
       stopRecording();
     };
 
-    // continuous 模式下偶爾會自動結束，重新啟動
-    recognition.onend = () => {
-      if (isRecording) {
-        try { recognition.start(); } catch(e) {}
-      }
+    r.onend = () => {
+      if (id !== instanceId || !isRecording) return;
+      // 說完一句後自動重啟，繼續等下一句
+      setTimeout(() => spawnRecognition(id), 100);
     };
 
-    try {
-      recognition.start();
-    } catch(e) {
-      showError('❌ 無法啟動辨識：' + e.message);
-      return;
-    }
-
-    isRecording = true;
-    recordBtn.classList.add('rec');
-    recordLabel.textContent = '點擊停止';
-    recordLabel.classList.add('rec');
-    setStatus('rec', '錄音中');
-    startTimer();
+    try { r.start(); } catch(e) { /* 忽略 InvalidStateError */ }
   }
 
   function stopRecording() {
     isRecording = false;
+    instanceId++;            // 讓所有待執行的 onend callback 失效
+
     if (recognition) {
-      recognition.onend = null;
-      try { recognition.stop(); } catch(e) {}
+      try { recognition.abort(); } catch(e) {}
       recognition = null;
     }
+
     recordBtn.classList.remove('rec');
     recordLabel.textContent = '重新錄音';
     recordLabel.classList.remove('rec');
@@ -263,17 +245,13 @@
       resultText.innerHTML = '<span>' + finalText.trim() + '</span>';
       copyBtn.classList.add('on');
       saveToHistory(finalText.trim());
-    } else if (!resultText.textContent) {
+    } else if (!resultText.textContent.trim()) {
       hint.style.display = 'flex';
       hint.textContent = '沒有辨識到文字，請重試';
     }
 
     setTimeout(() => setStatus('', '待機中'), 3000);
   }
-
-  // ── 錯誤 ──
-  function showError(msg) { errorBox.textContent = msg; errorBox.classList.add('on'); }
-  function clearError() { errorBox.classList.remove('on'); }
 
   // ── 複製 ──
   copyBtn.addEventListener('click', async () => {
