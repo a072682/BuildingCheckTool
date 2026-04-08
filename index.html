@@ -574,6 +574,7 @@
     let waveformBars = [];
 
     function buildWaveform() {
+      // 清空但保留 placeholder 參考
       waveformContainer.innerHTML = '';
       for (let i = 0; i < BAR_COUNT; i++) {
         const bar = document.createElement('div');
@@ -581,10 +582,30 @@
         waveformContainer.appendChild(bar);
         waveformBars.push(bar);
       }
+      // 重新加回 placeholder
+      const ph = document.createElement('div');
+      ph.className = 'waveform-placeholder';
+      ph.id = 'waveformPlaceholder';
+      ph.textContent = '點擊下方按鈕開始錄音';
+      waveformContainer.appendChild(ph);
     }
     buildWaveform();
 
     let animFrame;
+    let analyser, dataArray, audioCtx, micStream;
+
+    function animateWaveform() {
+      if (!analyser) return;
+      analyser.getByteFrequencyData(dataArray);
+      waveformBars.forEach((bar, i) => {
+        const idx = Math.floor(i * dataArray.length / BAR_COUNT);
+        const val = dataArray[idx] / 255;
+        const h = 6 + val * 70;
+        bar.style.height = h + 'px';
+        bar.classList.toggle('active', val > 0.05);
+      });
+      animFrame = requestAnimationFrame(animateWaveform);
+    }
 
     function resetWaveform() {
       cancelAnimationFrame(animFrame);
@@ -594,21 +615,34 @@
       });
     }
 
-    // 使用模擬動畫取代 getUserMedia，避免與 SpeechRecognition 搶占麥克風
-    function startVisualizer() {
-      function animate() {
+    async function startVisualizer() {
+      const ph = document.getElementById('waveformPlaceholder');
+      if (ph) ph.style.display = 'none';
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const source = audioCtx.createMediaStreamSource(micStream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        source.connect(analyser);
+        animateWaveform();
+      } catch(e) {
         waveformBars.forEach(bar => {
-          const h = 6 + Math.random() * 65;
-          bar.style.height = h + 'px';
-          bar.classList.toggle('active', h > 18);
+          bar.style.height = (6 + Math.random() * 30) + 'px';
+          bar.classList.add('active');
         });
-        animFrame = requestAnimationFrame(animate);
       }
-      animate();
     }
 
     function stopVisualizer() {
+      cancelAnimationFrame(animFrame);
+      if (micStream) micStream.getTracks().forEach(t => t.stop());
+      if (audioCtx) audioCtx.close();
+      analyser = null;
       resetWaveform();
+      const ph = document.getElementById('waveformPlaceholder');
+      if (ph) ph.style.display = '';
     }
 
     // ── TIMER ──
@@ -693,6 +727,7 @@
       recordLabel.classList.add('recording');
       setStatus('recording');
       startTimer();
+      startVisualizer();
 
       recognition = new SpeechRecognition();
       recognition.lang = 'zh-TW';
@@ -713,24 +748,25 @@
           (interim ? `<span class="interim-text">${interim}</span>` : '');
       };
 
-      // 手機常見的 network / no-speech 為暫時性錯誤，應重試而非中止
       recognition.onerror = (e) => {
-        if (e.error === 'aborted') return;
-        if (e.error === 'network' || e.error === 'no-speech') {
-          if (isRecording) setTimeout(() => { try { recognition.start(); } catch(err) {} }, 500);
-        } else {
-          stopRecording();
+        console.error('Speech error:', e.error);
+        if (e.error === 'no-speech') return;
+        let msg = '';
+        if (e.error === 'not-allowed') msg = '⚠️ 麥克風權限被拒絕，請在網址列左側解除封鎖';
+        else if (e.error === 'network') msg = '⚠️ 網路錯誤，請確認網路連線後重試';
+        else if (e.error !== 'aborted') msg = '⚠️ 錯誤：' + e.error;
+        if (msg) {
+          transcriptEmpty.style.display = 'none';
+          transcriptText.innerHTML = '<span style="color:#f06464;font-family:sans-serif;font-size:0.9rem">' + msg + '</span>';
         }
+        if (e.error !== 'aborted') stopRecording();
       };
 
-      // iOS Safari 需要延遲後才能重啟，直接呼叫會拋出 InvalidStateError
       recognition.onend = () => {
-        if (isRecording) setTimeout(() => { try { recognition.start(); } catch(err) {} }, 100);
+        if (isRecording) recognition.start(); // keep alive
       };
 
-      // 先啟動語音辨識取得麥克風權限，再啟動視覺化，避免雙重搶占
       recognition.start();
-      startVisualizer();
     }
 
     function stopRecording() {

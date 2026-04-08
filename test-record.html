@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>錄音測試</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: sans-serif;
+      background: #0a0a0f;
+      color: #e8e8f0;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      gap: 20px;
+    }
+    h1 { font-size: 1.2rem; color: #c8f064; }
+    .card {
+      width: 100%; max-width: 400px;
+      background: #12121a;
+      border: 1px solid #1e1e2e;
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .log {
+      background: #0a0a0f;
+      border: 1px solid #1e1e2e;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.75rem;
+      line-height: 1.8;
+      color: #a0a0c0;
+      min-height: 120px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    button {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #startBtn { background: #c8f064; color: #0a0a0f; }
+    #stopBtn  { background: #f06464; color: #fff; display: none; }
+    audio {
+      width: 100%;
+      display: none;
+      margin-top: 4px;
+    }
+    .status {
+      font-size: 0.8rem;
+      text-align: center;
+      color: #5a5a7a;
+      letter-spacing: 0.05em;
+    }
+    .status.rec { color: #f06464; animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .ok  { color: #c8f064; }
+    .err { color: #f06464; }
+    .info{ color: #64c8f0; }
+  </style>
+</head>
+<body>
+  <h1>🎙 錄音診斷工具</h1>
+
+  <div class="card">
+    <div class="log" id="log">初始化中...\n</div>
+    <div class="status" id="status">待機中</div>
+    <button id="startBtn">▶ 開始錄音</button>
+    <button id="stopBtn">⏹ 停止錄音</button>
+    <audio id="player" controls></audio>
+  </div>
+
+  <script>
+    const logEl    = document.getElementById('log');
+    const statusEl = document.getElementById('status');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn  = document.getElementById('stopBtn');
+    const player   = document.getElementById('player');
+
+    let mediaRecorder = null;
+    let chunks = [];
+
+    function log(msg, type = '') {
+      const prefix = type === 'ok' ? '✅ ' : type === 'err' ? '❌ ' : type === 'info' ? 'ℹ️ ' : '   ';
+      logEl.textContent += prefix + msg + '\n';
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // ── 環境檢查 ──
+    log('瀏覽器：' + navigator.userAgent.slice(0, 60), 'info');
+    log('Protocol：' + location.protocol, location.protocol === 'https:' ? 'ok' : 'err');
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      log('getUserMedia 不支援！', 'err');
+      startBtn.disabled = true;
+    } else {
+      log('getUserMedia 支援', 'ok');
+    }
+
+    if (!window.MediaRecorder) {
+      log('MediaRecorder 不支援！', 'err');
+      startBtn.disabled = true;
+    } else {
+      log('MediaRecorder 支援', 'ok');
+
+      // 支援的 MIME type
+      const types = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus',
+        'audio/mp4',
+      ];
+      const supported = types.filter(t => MediaRecorder.isTypeSupported(t));
+      log('支援格式：' + (supported[0] || '預設'), 'info');
+    }
+
+    // ── 錄音 ──
+    startBtn.addEventListener('click', async () => {
+      log('\n--- 開始錄音 ---');
+      chunks = [];
+      player.style.display = 'none';
+      player.src = '';
+
+      try {
+        log('請求麥克風權限...', 'info');
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        log('麥克風權限取得成功', 'ok');
+
+        // 選擇支援的格式
+        const mimeTypes = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4',''];
+        let mimeType = '';
+        for (const t of mimeTypes) {
+          if (!t || MediaRecorder.isTypeSupported(t)) { mimeType = t; break; }
+        }
+        log('使用格式：' + (mimeType || '瀏覽器預設'), 'info');
+
+        const options = mimeType ? { mimeType } : {};
+        mediaRecorder = new MediaRecorder(stream, options);
+        log('MediaRecorder 建立成功', 'ok');
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) {
+            chunks.push(e.data);
+            log(`收到音訊資料：${e.data.size} bytes`);
+          } else {
+            log('收到空資料（size=0）', 'err');
+          }
+        };
+
+        mediaRecorder.onstart = () => {
+          log('錄音開始！', 'ok');
+          statusEl.textContent = '● 錄音中...';
+          statusEl.className = 'status rec';
+          startBtn.style.display = 'none';
+          stopBtn.style.display = 'block';
+        };
+
+        mediaRecorder.onstop = () => {
+          log(`錄音結束，共 ${chunks.length} 個片段`);
+
+          // 停止所有音軌
+          stream.getTracks().forEach(t => { t.stop(); log('麥克風音軌已停止'); });
+
+          if (chunks.length === 0) {
+            log('沒有錄到任何資料！', 'err');
+            statusEl.textContent = '錄音失敗';
+            statusEl.className = 'status';
+            return;
+          }
+
+          const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+          log(`音訊 Blob 大小：${blob.size} bytes`, blob.size > 100 ? 'ok' : 'err');
+
+          if (blob.size > 100) {
+            const url = URL.createObjectURL(blob);
+            player.src = url;
+            player.style.display = 'block';
+            log('播放器已準備好 ↓ 請按下方播放鍵', 'ok');
+            statusEl.textContent = '錄音完成，請播放確認';
+            statusEl.className = 'status ok';
+          } else {
+            log('Blob 太小，錄音可能失敗', 'err');
+            statusEl.textContent = '錄音異常';
+            statusEl.className = 'status';
+          }
+
+          startBtn.style.display = 'block';
+          stopBtn.style.display = 'none';
+        };
+
+        mediaRecorder.onerror = (e) => {
+          log('MediaRecorder 錯誤：' + e.error, 'err');
+        };
+
+        mediaRecorder.start(500); // 每 500ms 收一次資料
+
+      } catch(e) {
+        log('錯誤：' + e.name + ' - ' + e.message, 'err');
+        if (e.name === 'NotAllowedError') log('→ 請允許麥克風權限', 'err');
+        if (e.name === 'NotFoundError')   log('→ 找不到麥克風裝置', 'err');
+        statusEl.textContent = '發生錯誤';
+        statusEl.className = 'status';
+      }
+    });
+
+    stopBtn.addEventListener('click', () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    });
+  </script>
+</body>
+</html>
