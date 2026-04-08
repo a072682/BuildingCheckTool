@@ -585,20 +585,6 @@
     buildWaveform();
 
     let animFrame;
-    let analyser, dataArray, audioCtx, micStream;
-
-    function animateWaveform() {
-      if (!analyser) return;
-      analyser.getByteFrequencyData(dataArray);
-      waveformBars.forEach((bar, i) => {
-        const idx = Math.floor(i * dataArray.length / BAR_COUNT);
-        const val = dataArray[idx] / 255;
-        const h = 6 + val * 70;
-        bar.style.height = h + 'px';
-        bar.classList.toggle('active', val > 0.05);
-      });
-      animFrame = requestAnimationFrame(animateWaveform);
-    }
 
     function resetWaveform() {
       cancelAnimationFrame(animFrame);
@@ -608,24 +594,20 @@
       });
     }
 
-    async function startVisualizer() {
-      try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const source = audioCtx.createMediaStreamSource(micStream);
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 256;
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-        source.connect(analyser);
-        animateWaveform();
-      } catch(e) { /* silent fallback */ }
+    // 使用模擬動畫取代 getUserMedia，避免與 SpeechRecognition 搶占麥克風
+    function startVisualizer() {
+      function animate() {
+        waveformBars.forEach(bar => {
+          const h = 6 + Math.random() * 65;
+          bar.style.height = h + 'px';
+          bar.classList.toggle('active', h > 18);
+        });
+        animFrame = requestAnimationFrame(animate);
+      }
+      animate();
     }
 
     function stopVisualizer() {
-      cancelAnimationFrame(animFrame);
-      if (micStream) micStream.getTracks().forEach(t => t.stop());
-      if (audioCtx) audioCtx.close();
-      analyser = null;
       resetWaveform();
     }
 
