@@ -23,7 +23,6 @@
     html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
     body{display:flex;flex-direction:column;align-items:center;min-height:100dvh;padding:0 20px 48px}
 
-    /* HEADER */
     header{width:100%;max-width:640px;padding:32px 0 20px;display:flex;align-items:center;gap:12px}
     header h1{font-family:'Noto Serif TC',serif;font-size:clamp(1.4rem,5vw,2rem);font-weight:600}
     .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-left:auto;animation:pulse 2s ease-in-out infinite}
@@ -31,21 +30,15 @@
 
     main{width:100%;max-width:640px;display:flex;flex-direction:column;gap:20px;flex:1}
 
-    /* STATUS */
+    /* 狀態列 */
     .status-row{display:flex;align-items:center;gap:8px;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
     .status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .3s,box-shadow .3s;flex-shrink:0}
     .status-dot.rec{background:var(--danger);box-shadow:0 0 8px var(--danger);animation:blink 1s ease-in-out infinite}
     .status-dot.done{background:var(--accent);box-shadow:0 0 8px var(--accent)}
     @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 
-    /* WAVEFORM */
-    .waveform-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;height:90px;display:flex;align-items:center;justify-content:center;gap:3px;padding:0 20px;overflow:hidden;position:relative}
-    .bar{width:3px;background:var(--border);border-radius:2px;height:6px;transition:height .08s ease}
-    .bar.on{background:var(--accent)}
-    .idle-hint{position:absolute;font-size:.7rem;letter-spacing:.08em;color:var(--muted);pointer-events:none}
-
-    /* RECORD BTN */
-    .record-area{display:flex;flex-direction:column;align-items:center;gap:12px}
+    /* 錄音按鈕 */
+    .record-area{display:flex;flex-direction:column;align-items:center;gap:14px;padding:10px 0}
     .timer{font-size:.8rem;letter-spacing:.2em;color:var(--muted);font-variant-numeric:tabular-nums}
     .timer.on{color:var(--danger)}
     .record-btn{width:84px;height:84px;border-radius:50%;border:none;background:transparent;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;transition:transform .15s;-webkit-tap-highlight-color:transparent}
@@ -63,29 +56,24 @@
     .record-label{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
     .record-label.rec{color:var(--danger)}
 
-    /* RESULT */
+    /* 結果框 */
     .result-section{display:flex;flex-direction:column;gap:10px}
     .result-header{display:flex;align-items:center;justify-content:space-between}
     .section-label{font-size:.65rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
     .copy-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .2s;display:none}
+    .copy-btn.on{display:block}
     .copy-btn:hover{border-color:var(--accent);color:var(--accent)}
-    .copy-btn.on{border-color:var(--accent);color:var(--accent);display:block}
-    .result-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;min-height:160px;position:relative;transition:border-color .3s}
+    .result-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;min-height:180px;position:relative;transition:border-color .3s}
     .result-box.has-text{border-color:#2a2a3e}
-    .empty-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.75rem;letter-spacing:.08em;pointer-events:none;text-align:center;padding:16px;transition:opacity .3s}
+    .hint{color:var(--muted);font-size:.75rem;letter-spacing:.08em;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;pointer-events:none}
     .result-text{font-family:'Noto Serif TC',serif;font-size:1.05rem;line-height:1.9;color:var(--text);white-space:pre-wrap;word-break:break-word}
     .interim{color:var(--muted);font-style:italic}
 
-    /* AUDIO */
-    .audio-section{display:none;flex-direction:column;gap:8px}
-    .audio-section.on{display:flex}
-    audio{width:100%;border-radius:10px;accent-color:var(--accent)}
-
-    /* ERROR */
+    /* 錯誤 */
     .error-box{display:none;background:#1a0f0f;border:1px solid var(--danger);border-radius:10px;padding:14px 16px;font-size:.78rem;color:#f0a0a0;line-height:1.6}
     .error-box.on{display:block}
 
-    /* HISTORY */
+    /* 歷史 */
     .history-section{display:none;flex-direction:column;gap:10px}
     .history-section.on{display:flex}
     .history-list{display:flex;flex-direction:column;gap:8px}
@@ -93,40 +81,21 @@
     .history-item:hover{border-color:var(--accent2)}
     .hi-text{font-family:'Noto Serif TC',serif;font-size:.85rem;color:var(--text);line-height:1.6;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
     .hi-time{font-size:.6rem;color:var(--muted);flex-shrink:0;margin-top:2px}
-
-    /* INSTALL BANNER */
-    .install-banner{display:none;width:100%;max-width:640px;background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:14px 20px;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
-    .install-banner.on{display:flex}
-    .install-banner p{font-size:.75rem;line-height:1.5}
-    .install-banner p span{color:var(--accent)}
-    .install-btn{background:var(--accent);color:#0a0a0f;border:none;font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:8px 16px;border-radius:8px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-    .dismiss-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1rem;flex-shrink:0}
   </style>
 </head>
 <body>
-
-<div class="install-banner" id="installBanner">
-  <p><span>安裝提示</span><br>加入主畫面，像 App 一樣使用</p>
-  <button class="install-btn" id="installBtn">安裝</button>
-  <button class="dismiss-btn" id="dismissBtn">✕</button>
-</div>
 
 <header><h1>聲轉文字</h1><div class="dot"></div></header>
 
 <main>
 
-  <!-- 狀態列 -->
   <div class="status-row">
     <div class="status-dot" id="statusDot"></div>
     <span id="statusText">待機中</span>
   </div>
 
-  <!-- 波形 -->
-  <div class="waveform-box" id="waveformBox">
-    <div class="idle-hint" id="idleHint">點擊下方按鈕開始錄音</div>
-  </div>
+  <div class="error-box" id="errorBox"></div>
 
-  <!-- 錄音按鈕 -->
   <div class="record-area">
     <div class="timer" id="timer">00:00</div>
     <button class="record-btn" id="recordBtn" aria-label="錄音">
@@ -145,28 +114,17 @@
     <div class="record-label" id="recordLabel">按下錄音</div>
   </div>
 
-  <!-- 錯誤訊息 -->
-  <div class="error-box" id="errorBox"></div>
-
-  <!-- 辨識結果 -->
   <div class="result-section">
     <div class="result-header">
       <span class="section-label">辨識結果</span>
       <button class="copy-btn" id="copyBtn">複製</button>
     </div>
     <div class="result-box" id="resultBox">
-      <div class="empty-hint" id="emptyHint">辨識結果將顯示在這裡</div>
+      <div class="hint" id="hint">辨識結果將顯示在這裡</div>
       <div class="result-text" id="resultText"></div>
     </div>
   </div>
 
-  <!-- 錄音備份播放 -->
-  <div class="audio-section" id="audioSection">
-    <span class="section-label">錄音備份</span>
-    <audio id="audioPlayer" controls></audio>
-  </div>
-
-  <!-- 歷史紀錄 -->
   <div class="history-section" id="historySection">
     <span class="section-label">歷史紀錄</span>
     <div class="history-list" id="historyList"></div>
@@ -175,290 +133,199 @@
 </main>
 
 <script>
-// ── DOM ──
-const recordBtn     = document.getElementById('recordBtn');
-const recordLabel   = document.getElementById('recordLabel');
-const timerEl       = document.getElementById('timer');
-const waveformBox   = document.getElementById('waveformBox');
-const idleHint      = document.getElementById('idleHint');
-const statusDot     = document.getElementById('statusDot');
-const statusText    = document.getElementById('statusText');
-const resultBox     = document.getElementById('resultBox');
-const resultText    = document.getElementById('resultText');
-const emptyHint     = document.getElementById('emptyHint');
-const copyBtn       = document.getElementById('copyBtn');
-const errorBox      = document.getElementById('errorBox');
-const audioSection  = document.getElementById('audioSection');
-const audioPlayer   = document.getElementById('audioPlayer');
-const historySection= document.getElementById('historySection');
-const historyList   = document.getElementById('historyList');
+  const recordBtn      = document.getElementById('recordBtn');
+  const recordLabel    = document.getElementById('recordLabel');
+  const timerEl        = document.getElementById('timer');
+  const statusDot      = document.getElementById('statusDot');
+  const statusText     = document.getElementById('statusText');
+  const resultBox      = document.getElementById('resultBox');
+  const resultText     = document.getElementById('resultText');
+  const hint           = document.getElementById('hint');
+  const copyBtn        = document.getElementById('copyBtn');
+  const errorBox       = document.getElementById('errorBox');
+  const historySection = document.getElementById('historySection');
+  const historyList    = document.getElementById('historyList');
 
-// ── 檢查支援 ──
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (!SpeechRecognition || !navigator.mediaDevices) {
-  showError('⚠️ 此瀏覽器不支援語音辨識，請使用 Android Chrome');
-  recordBtn.disabled = true;
-}
-
-// ── 波形 ──
-const bars = [];
-let animFrame;
-for (let i = 0; i < 44; i++) {
-  const b = document.createElement('div');
-  b.className = 'bar';
-  waveformBox.appendChild(b);
-  bars.push(b);
-}
-function startWave() {
-  idleHint.style.opacity = '0';
-  (function loop() {
-    bars.forEach(b => {
-      const h = 6 + Math.random() * 68;
-      b.style.height = h + 'px';
-      b.classList.toggle('on', h > 20);
-    });
-    animFrame = requestAnimationFrame(loop);
-  })();
-}
-function stopWave() {
-  cancelAnimationFrame(animFrame);
-  bars.forEach(b => { b.style.height = '6px'; b.classList.remove('on'); });
-  idleHint.style.opacity = '1';
-}
-
-// ── 計時器 ──
-let timerInterval, secs = 0;
-function startTimer() {
-  secs = 0; timerEl.textContent = '00:00'; timerEl.classList.add('on');
-  timerInterval = setInterval(() => {
-    secs++;
-    timerEl.textContent = String(Math.floor(secs/60)).padStart(2,'0') + ':' + String(secs%60).padStart(2,'0');
-  }, 1000);
-}
-function stopTimer() { clearInterval(timerInterval); timerEl.classList.remove('on'); }
-
-// ── 狀態 ──
-function setStatus(state) {
-  statusDot.className = 'status-dot' + (state ? ' '+state : '');
-  statusText.textContent = {rec:'錄音中', done:'完成', '':'待機中'}[state] || '待機中';
-}
-
-// ── 錯誤 ──
-function showError(m) { errorBox.textContent = m; errorBox.classList.add('on'); }
-function clearError() { errorBox.classList.remove('on'); }
-
-// ── 主邏輯 ──
-let isRecording = false;
-let mediaRecorder = null;
-let chunks = [];
-let recognition = null;
-let finalText = '';
-
-recordBtn.addEventListener('click', () => {
-  isRecording ? stopAll() : startAll();
-});
-
-async function startAll() {
-  clearError();
-  finalText = '';
-  chunks = [];
-  resultText.innerHTML = '';
-  emptyHint.style.display = 'flex';
-  emptyHint.textContent = '辨識中...';
-  copyBtn.classList.remove('on');
-  resultBox.classList.remove('has-text');
-  audioSection.classList.remove('on');
-  audioPlayer.src = '';
-
-  // ── 1. 啟動 MediaRecorder（錄音備份）──
-  let stream;
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  } catch(e) {
-    if (e.name === 'NotAllowedError') showError('❌ 麥克風權限被拒絕，請在網址列允許');
-    else showError('❌ 無法開啟麥克風：' + e.message);
-    return;
+  // ── 檢查支援 ──
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    errorBox.textContent = '⚠️ 此瀏覽器不支援語音辨識，請使用 Android Chrome';
+    errorBox.classList.add('on');
+    recordBtn.disabled = true;
   }
 
-  const tryTypes = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4',''];
-  let mime = '';
-  for (const t of tryTypes) { if (!t || MediaRecorder.isTypeSupported(t)) { mime = t; break; } }
-  mediaRecorder = new MediaRecorder(stream, mime ? {mimeType: mime} : {});
-  mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-  mediaRecorder.onstop = () => {
-    stream.getTracks().forEach(t => t.stop());
-    if (chunks.length) {
-      const blob = new Blob(chunks, {type: mime || 'audio/webm'});
-      audioPlayer.src = URL.createObjectURL(blob);
-      audioSection.classList.add('on');
-    }
-  };
-  mediaRecorder.start(500);
+  // ── 計時器 ──
+  let timerInterval, secs = 0;
+  function startTimer() {
+    secs = 0; timerEl.textContent = '00:00'; timerEl.classList.add('on');
+    timerInterval = setInterval(() => {
+      secs++;
+      timerEl.textContent = String(Math.floor(secs/60)).padStart(2,'0') + ':' + String(secs%60).padStart(2,'0');
+    }, 1000);
+  }
+  function stopTimer() { clearInterval(timerInterval); timerEl.classList.remove('on'); }
 
-  // ── 2. 啟動 SpeechRecognition（即時辨識）──
-  recognition = new SpeechRecognition();
-  recognition.lang = 'zh-TW';
-  recognition.interimResults = true;
-  recognition.continuous = true;
-  recognition.maxAlternatives = 1;
+  // ── 狀態 ──
+  function setStatus(state, label) {
+    statusDot.className = 'status-dot' + (state ? ' '+state : '');
+    statusText.textContent = label;
+  }
 
-  recognition.onresult = e => {
-    let interim = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
-    }
-    emptyHint.style.display = 'none';
-    resultText.innerHTML =
-      '<span>' + finalText + '</span>' +
-      (interim ? '<span class="interim">' + interim + '</span>' : '');
-    resultBox.classList.add('has-text');
-  };
+  // ── 主邏輯 ──
+  let isRecording = false;
+  let recognition = null;
+  let finalText = '';
 
-  recognition.onerror = e => {
-    if (e.error === 'no-speech' || e.error === 'aborted') return;
-    if (e.error === 'network') {
-      // 網路短暫中斷不停止，等 onend 重啟
+  recordBtn.addEventListener('click', () => {
+    isRecording ? stopRecording() : startRecording();
+  });
+
+  function startRecording() {
+    if (!SR) return;
+    clearError();
+    finalText = '';
+    resultText.innerHTML = '';
+    hint.style.display = 'flex';
+    hint.textContent = '辨識中...';
+    copyBtn.classList.remove('on');
+    resultBox.classList.remove('has-text');
+
+    recognition = new SR();
+    recognition.lang = 'zh-TW';
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = e => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      hint.style.display = 'none';
+      resultText.innerHTML =
+        '<span>' + finalText + '</span>' +
+        (interim ? '<span class="interim">' + interim + '</span>' : '');
+      resultBox.classList.add('has-text');
+    };
+
+    recognition.onerror = e => {
+      if (e.error === 'no-speech' || e.error === 'aborted') return;
+      if (e.error === 'not-allowed') {
+        showError('❌ 麥克風權限被拒絕，請在網址列允許麥克風');
+        stopRecording(); return;
+      }
+      if (e.error === 'network') {
+        showError('❌ 網路錯誤，請確認連線後重試');
+        stopRecording(); return;
+      }
+      showError('❌ 辨識錯誤：' + e.error);
+      stopRecording();
+    };
+
+    // continuous 模式下偶爾會自動結束，重新啟動
+    recognition.onend = () => {
+      if (isRecording) {
+        try { recognition.start(); } catch(e) {}
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch(e) {
+      showError('❌ 無法啟動辨識：' + e.message);
       return;
     }
-    showError('辨識錯誤：' + e.error);
-    stopAll();
-  };
 
-  recognition.onend = () => {
-    // 若還在錄音中就自動重啟（continuous 模式有時會自動結束）
-    if (isRecording) {
-      try { recognition.start(); } catch(e) {}
+    isRecording = true;
+    recordBtn.classList.add('rec');
+    recordLabel.textContent = '點擊停止';
+    recordLabel.classList.add('rec');
+    setStatus('rec', '錄音中');
+    startTimer();
+  }
+
+  function stopRecording() {
+    isRecording = false;
+    if (recognition) {
+      recognition.onend = null;
+      try { recognition.stop(); } catch(e) {}
+      recognition = null;
     }
-  };
+    recordBtn.classList.remove('rec');
+    recordLabel.textContent = '重新錄音';
+    recordLabel.classList.remove('rec');
+    setStatus('done', '完成');
+    stopTimer();
 
-  recognition.start();
-
-  // ── 3. UI ──
-  isRecording = true;
-  recordBtn.classList.add('rec');
-  recordLabel.textContent = '點擊停止';
-  recordLabel.classList.add('rec');
-  setStatus('rec');
-  startTimer();
-  startWave();
-}
-
-function stopAll() {
-  isRecording = false;
-
-  // 停止辨識
-  if (recognition) {
-    recognition.onend = null; // 防止重啟
-    try { recognition.stop(); } catch(e) {}
-    recognition = null;
-  }
-
-  // 停止錄音
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-    mediaRecorder.stop();
-  }
-
-  // UI
-  recordBtn.classList.remove('rec');
-  recordLabel.textContent = '重新錄音';
-  recordLabel.classList.remove('rec');
-  setStatus('done');
-  stopTimer();
-  stopWave();
-
-  // 顯示複製按鈕
-  if (finalText.trim()) {
-    copyBtn.classList.add('on');
-    saveToHistory(finalText.trim());
-  } else {
-    emptyHint.style.display = 'flex';
-    emptyHint.textContent = '沒有辨識到文字，請重試';
-  }
-
-  setTimeout(() => setStatus(''), 3000);
-}
-
-// ── 複製 ──
-copyBtn.addEventListener('click', async () => {
-  const text = finalText.trim();
-  if (!text) return;
-  try { await navigator.clipboard.writeText(text); }
-  catch(e) {
-    const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta);
-  }
-  copyBtn.textContent = '已複製 ✓';
-  setTimeout(() => { copyBtn.textContent = '複製'; }, 2000);
-});
-
-// ── 歷史紀錄 ──
-let history = [];
-try { history = JSON.parse(localStorage.getItem('vtt-history') || '[]'); } catch(e) {}
-
-function renderHistory() {
-  if (!history.length) { historySection.classList.remove('on'); return; }
-  historySection.classList.add('on');
-  historyList.innerHTML = '';
-  [...history].reverse().slice(0, 5).forEach(item => {
-    const el = document.createElement('div');
-    el.className = 'history-item';
-    el.innerHTML = '<div class="hi-text">' + item.text + '</div><div class="hi-time">' + item.time + '</div>';
-    el.addEventListener('click', () => {
-      resultText.innerHTML = '<span>' + item.text + '</span>';
-      emptyHint.style.display = 'none';
-      resultBox.classList.add('has-text');
+    if (finalText.trim()) {
+      hint.style.display = 'none';
+      resultText.innerHTML = '<span>' + finalText.trim() + '</span>';
       copyBtn.classList.add('on');
-      finalText = item.text;
-    });
-    historyList.appendChild(el);
+      saveToHistory(finalText.trim());
+    } else if (!resultText.textContent) {
+      hint.style.display = 'flex';
+      hint.textContent = '沒有辨識到文字，請重試';
+    }
+
+    setTimeout(() => setStatus('', '待機中'), 3000);
+  }
+
+  // ── 錯誤 ──
+  function showError(msg) { errorBox.textContent = msg; errorBox.classList.add('on'); }
+  function clearError() { errorBox.classList.remove('on'); }
+
+  // ── 複製 ──
+  copyBtn.addEventListener('click', async () => {
+    if (!finalText.trim()) return;
+    try { await navigator.clipboard.writeText(finalText.trim()); }
+    catch(e) {
+      const ta = document.createElement('textarea');
+      ta.value = finalText.trim();
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    copyBtn.textContent = '已複製 ✓';
+    setTimeout(() => { copyBtn.textContent = '複製'; }, 2000);
   });
-}
 
-function saveToHistory(text) {
-  const time = new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
-  history.push({text, time});
-  if (history.length > 20) history.shift();
-  try { localStorage.setItem('vtt-history', JSON.stringify(history)); } catch(e) {}
+  // ── 歷史紀錄 ──
+  let history = [];
+  try { history = JSON.parse(localStorage.getItem('vtt-history') || '[]'); } catch(e) {}
+
+  function renderHistory() {
+    if (!history.length) { historySection.classList.remove('on'); return; }
+    historySection.classList.add('on');
+    historyList.innerHTML = '';
+    [...history].reverse().slice(0, 5).forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'history-item';
+      el.innerHTML = '<div class="hi-text">' + item.text + '</div><div class="hi-time">' + item.time + '</div>';
+      el.addEventListener('click', () => {
+        finalText = item.text;
+        resultText.innerHTML = '<span>' + item.text + '</span>';
+        hint.style.display = 'none';
+        resultBox.classList.add('has-text');
+        copyBtn.classList.add('on');
+      });
+      historyList.appendChild(el);
+    });
+  }
+
+  function saveToHistory(text) {
+    const time = new Date().toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit' });
+    history.push({ text, time });
+    if (history.length > 20) history.shift();
+    try { localStorage.setItem('vtt-history', JSON.stringify(history)); } catch(e) {}
+    renderHistory();
+  }
+
   renderHistory();
-}
 
-renderHistory();
-
-// ── PWA 安裝 ──
-let deferredPrompt;
-const installBanner = document.getElementById('installBanner');
-const installBtn    = document.getElementById('installBtn');
-const dismissBtn    = document.getElementById('dismissBtn');
-
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  if (!localStorage.getItem('pwa-dismissed')) installBanner.classList.add('on');
-});
-
-installBtn.addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt = null;
-  installBanner.classList.remove('on');
-});
-
-dismissBtn.addEventListener('click', () => {
-  installBanner.classList.remove('on');
-  localStorage.setItem('pwa-dismissed', '1');
-});
-
-// ── Service Worker ──
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').then(reg => {
-    // 強制更新到最新版
-    reg.update();
-  }).catch(() => {});
-}
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(reg => reg.update()).catch(() => {});
+  }
 </script>
 </body>
 </html>
