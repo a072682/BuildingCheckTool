@@ -6,860 +6,339 @@
   <title>聲轉文字</title>
   <meta name="description" content="語音轉文字 PWA App" />
   <meta name="theme-color" content="#0a0a0f" />
-
-  <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="聲轉文字" />
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #0a0a0f;
-      --surface: #12121a;
-      --border: #1e1e2e;
-      --accent: #c8f064;
-      --accent2: #64c8f0;
-      --text: #e8e8f0;
-      --muted: #5a5a7a;
-      --danger: #f06464;
-    }
-
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Space Mono', monospace;
-      overflow-x: hidden;
-    }
-
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100dvh;
-      padding: 0 20px 40px;
-    }
-
-    /* ── HEADER ── */
-    header {
-      width: 100%;
-      max-width: 640px;
-      padding: 32px 0 24px;
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-    }
-
-    header h1 {
-      font-family: 'Noto Serif TC', serif;
-      font-size: clamp(1.4rem, 5vw, 2rem);
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      color: var(--text);
-    }
-
-    header .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-      margin-left: auto;
-      flex-shrink: 0;
-      animation: pulse-dot 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.7); }
-    }
-
-    /* ── MAIN ── */
-    main {
-      width: 100%;
-      max-width: 640px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      flex: 1;
-    }
-
-    /* ── STATUS BAR ── */
-    .status-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.7rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .status-indicator {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--muted);
-      transition: background 0.3s, box-shadow 0.3s;
-    }
-
-    .status-indicator.recording {
-      background: var(--danger);
-      box-shadow: 0 0 10px var(--danger);
-      animation: blink 1s ease-in-out infinite;
-    }
-
-    .status-indicator.processing {
-      background: var(--accent2);
-      box-shadow: 0 0 10px var(--accent2);
-    }
-
-    .status-indicator.done {
-      background: var(--accent);
-      box-shadow: 0 0 10px var(--accent);
-    }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    /* ── WAVEFORM ── */
-    .waveform-container {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      height: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      padding: 0 24px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .waveform-bar {
-      width: 3px;
-      background: var(--border);
-      border-radius: 2px;
-      height: 6px;
-      transition: height 0.1s ease, background 0.3s;
-    }
-
-    .waveform-bar.active {
-      background: var(--accent);
-    }
-
-    .waveform-placeholder {
-      color: var(--muted);
-      font-size: 0.75rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      position: absolute;
-    }
-
-    /* ── RECORD BUTTON ── */
-    .record-area {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .record-btn {
-      width: 88px; height: 88px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      position: relative;
-      background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.2s;
-    }
-
-    .record-btn:active { transform: scale(0.94); }
-
-    .record-btn .ring {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      border: 2px solid var(--accent);
-      transition: transform 0.3s, opacity 0.3s;
-    }
-
-    .record-btn .ring-pulse {
-      position: absolute;
-      inset: -8px;
-      border-radius: 50%;
-      border: 1px solid var(--accent);
-      opacity: 0;
-    }
-
-    .record-btn.recording .ring-pulse {
-      animation: ring-expand 1.5s ease-out infinite;
-    }
-
-    @keyframes ring-expand {
-      0% { transform: scale(1); opacity: 0.6; }
-      100% { transform: scale(1.5); opacity: 0; }
-    }
-
-    .record-btn .core {
-      width: 60px; height: 60px;
-      border-radius: 50%;
-      background: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.3s, border-radius 0.3s;
-      position: relative;
-      z-index: 1;
-    }
-
-    .record-btn.recording .core {
-      background: var(--danger);
-      border-radius: 12px;
-    }
-
-    .record-btn .icon-mic {
-      width: 24px; height: 24px;
-      display: block;
-      transition: opacity 0.2s;
-    }
-
-    .record-btn.recording .icon-mic { opacity: 0; position: absolute; }
-
-    .record-btn .icon-stop {
-      width: 16px; height: 16px;
-      background: white;
-      border-radius: 3px;
-      display: none;
-    }
-
-    .record-btn.recording .icon-stop { display: block; }
-
-    .record-label {
-      font-size: 0.7rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--muted);
-      transition: color 0.3s;
-    }
-
-    .record-label.recording { color: var(--danger); }
-
-    /* ── TIMER ── */
-    .timer {
-      font-size: 0.8rem;
-      letter-spacing: 0.2em;
-      color: var(--muted);
-      font-variant-numeric: tabular-nums;
-      min-height: 1.2em;
-    }
-
-    .timer.active { color: var(--danger); }
-
-    /* ── TRANSCRIPT ── */
-    .transcript-section {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .transcript-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .transcript-label {
-      font-size: 0.65rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .copy-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-family: 'Space Mono', monospace;
-      font-size: 0.65rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: none;
-    }
-
-    .copy-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .copy-btn.copied {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .copy-btn.visible { display: block; }
-
-    .transcript-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      min-height: 180px;
-      flex: 1;
-      position: relative;
-      transition: border-color 0.3s;
-    }
-
-    .transcript-box.has-content {
-      border-color: #2a2a3e;
-    }
-
-    .transcript-empty {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--muted);
-      font-size: 0.75rem;
-      letter-spacing: 0.08em;
-      pointer-events: none;
-    }
-
-    .transcript-text {
-      font-family: 'Noto Serif TC', serif;
-      font-size: 1.05rem;
-      line-height: 1.9;
-      color: var(--text);
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .interim-text {
-      color: var(--muted);
-      font-style: italic;
-    }
-
-    /* ── HISTORY ── */
-    .history-section {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .history-label {
-      font-size: 0.65rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .history-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      cursor: pointer;
-      transition: border-color 0.2s;
-    }
-
-    .history-item:hover { border-color: var(--accent2); }
-
-    .history-item-text {
-      font-family: 'Noto Serif TC', serif;
-      font-size: 0.85rem;
-      color: var(--text);
-      line-height: 1.6;
-      flex: 1;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-    }
-
-    .history-item-time {
-      font-size: 0.6rem;
-      color: var(--muted);
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    /* ── NOT SUPPORTED ── */
-    .not-supported {
-      display: none;
-      background: #1a0f0f;
-      border: 1px solid var(--danger);
-      border-radius: 12px;
-      padding: 20px;
-      color: #f0a0a0;
-      font-size: 0.85rem;
-      line-height: 1.7;
-      text-align: center;
-    }
-
-    /* ── INSTALL BANNER ── */
-    .install-banner {
-      display: none;
-      width: 100%;
-      max-width: 640px;
-      background: var(--surface);
-      border: 1px solid var(--accent);
-      border-radius: 12px;
-      padding: 14px 20px;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-
-    .install-banner.visible { display: flex; }
-
-    .install-banner p {
-      font-size: 0.75rem;
-      color: var(--text);
-      line-height: 1.5;
-    }
-
-    .install-banner p span {
-      color: var(--accent);
-    }
-
-    .install-btn {
-      background: var(--accent);
-      color: #0a0a0f;
-      border: none;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.65rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      font-weight: 700;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .dismiss-btn {
-      background: transparent;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 1rem;
-      flex-shrink: 0;
-    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0a0a0f;--surface:#12121a;--border:#1e1e2e;--accent:#c8f064;--accent2:#64c8f0;--text:#e8e8f0;--muted:#5a5a7a;--danger:#f06464;--warn:#f0c864}
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+    body{display:flex;flex-direction:column;align-items:center;min-height:100dvh;padding:0 20px 48px}
+    header{width:100%;max-width:640px;padding:32px 0 20px;display:flex;align-items:baseline;gap:12px}
+    header h1{font-family:'Noto Serif TC',serif;font-size:clamp(1.4rem,5vw,2rem);font-weight:600;color:var(--text)}
+    header .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-left:auto;animation:pulse-dot 2s ease-in-out infinite}
+    @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+    main{width:100%;max-width:640px;display:flex;flex-direction:column;gap:20px;flex:1}
+    .step-badge{display:inline-flex;align-items:center;gap:8px;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+    .step-badge .num{width:20px;height:20px;border-radius:50%;border:1px solid var(--muted);display:flex;align-items:center;justify-content:center;font-size:.6rem}
+    .step-badge.active .num{background:var(--accent);border-color:var(--accent);color:#0a0a0f}
+    .step-badge.active{color:var(--accent)}
+    .waveform-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;height:90px;display:flex;align-items:center;justify-content:center;gap:3px;padding:0 20px;overflow:hidden;position:relative}
+    .waveform-bar{width:3px;background:var(--border);border-radius:2px;height:6px;transition:height .08s ease}
+    .waveform-bar.active{background:var(--accent)}
+    .waveform-idle{position:absolute;font-size:.7rem;letter-spacing:.08em;color:var(--muted)}
+    .record-area{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .timer{font-size:.8rem;letter-spacing:.2em;color:var(--muted);font-variant-numeric:tabular-nums}
+    .timer.active{color:var(--danger)}
+    .record-btn{width:84px;height:84px;border-radius:50%;border:none;background:transparent;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+    .record-btn:active{transform:scale(.93)}
+    .record-btn .ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent)}
+    .record-btn .ring-pulse{position:absolute;inset:-8px;border-radius:50%;border:1px solid var(--accent);opacity:0}
+    .record-btn.recording .ring-pulse{animation:ring-expand 1.4s ease-out infinite}
+    @keyframes ring-expand{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.5);opacity:0}}
+    .record-btn .core{width:58px;height:58px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;transition:background .3s,border-radius .3s;position:relative;z-index:1}
+    .record-btn.recording .core{background:var(--danger);border-radius:14px}
+    .icon-mic{display:block}
+    .icon-stop{display:none;width:16px;height:16px;background:#fff;border-radius:3px}
+    .record-btn.recording .icon-mic{display:none}
+    .record-btn.recording .icon-stop{display:block}
+    .record-label{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+    .record-label.recording{color:var(--danger)}
+    .player-section{display:none;flex-direction:column;gap:10px}
+    .player-section.visible{display:flex}
+    audio{width:100%;border-radius:10px;accent-color:var(--accent)}
+    .convert-btn{width:100%;padding:16px;background:var(--accent);color:#0a0a0f;border:none;border-radius:12px;font-family:'Space Mono',monospace;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:opacity .2s,transform .15s;display:none}
+    .convert-btn:active{transform:scale(.98)}
+    .convert-btn.visible{display:block}
+    .convert-btn:disabled{opacity:.4;cursor:not-allowed}
+    .transcript-section{display:flex;flex-direction:column;gap:10px}
+    .transcript-header{display:flex;align-items:center;justify-content:space-between}
+    .copy-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .2s;display:none}
+    .copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .copy-btn.copied{border-color:var(--accent);color:var(--accent)}
+    .copy-btn.visible{display:block}
+    .transcript-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;min-height:160px;position:relative}
+    .transcript-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.75rem;letter-spacing:.08em;pointer-events:none;text-align:center;padding:16px}
+    .transcript-text{font-family:'Noto Serif TC',serif;font-size:1.05rem;line-height:1.9;color:var(--text);white-space:pre-wrap;word-break:break-word}
+    .converting{display:none;align-items:center;gap:10px;font-size:.75rem;color:var(--accent2);letter-spacing:.08em}
+    .converting.visible{display:flex}
+    .spin{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent2);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .history-section{display:none;flex-direction:column;gap:10px}
+    .history-section.visible{display:flex}
+    .history-label{font-size:.65rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+    .history-list{display:flex;flex-direction:column;gap:8px}
+    .history-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;cursor:pointer;transition:border-color .2s}
+    .history-item:hover{border-color:var(--accent2)}
+    .history-item-text{font-family:'Noto Serif TC',serif;font-size:.85rem;color:var(--text);line-height:1.6;flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .history-item-time{font-size:.6rem;color:var(--muted);flex-shrink:0;margin-top:2px}
+    .error-msg{display:none;background:#1a0f0f;border:1px solid var(--danger);border-radius:10px;padding:14px 16px;font-size:.78rem;color:#f0a0a0;line-height:1.6}
+    .error-msg.visible{display:block}
   </style>
 </head>
 <body>
+<header><h1>聲轉文字</h1><div class="dot"></div></header>
+<main>
 
-  <header>
-    <h1>聲轉文字</h1>
-    <div class="dot"></div>
-  </header>
+  <div class="step-badge active" id="step1Badge"><div class="num">1</div>錄音</div>
 
-  <div class="install-banner" id="installBanner">
-    <p><span>安裝提示</span><br>加入主畫面，像 App 一樣使用</p>
-    <button class="install-btn" id="installBtn">安裝</button>
-    <button class="dismiss-btn" id="dismissBtn">✕</button>
+  <div class="waveform-box" id="waveformBox">
+    <div class="waveform-idle" id="waveformIdle">等待錄音...</div>
   </div>
 
-  <main>
-
-    <div class="not-supported" id="notSupported">
-      ⚠️ 您的瀏覽器不支援語音辨識。<br>
-      請使用 <strong>Chrome</strong> 或 <strong>Edge</strong> 開啟此頁面。
-    </div>
-
-    <!-- Status -->
-    <div class="status-bar">
-      <div class="status-indicator" id="statusDot"></div>
-      <span id="statusText">待機中</span>
-    </div>
-
-    <!-- Waveform -->
-    <div class="waveform-container" id="waveformContainer">
-      <div class="waveform-placeholder" id="waveformPlaceholder">點擊下方按鈕開始錄音</div>
-    </div>
-
-    <!-- Record -->
-    <div class="record-area">
-      <div class="timer" id="timer">00:00</div>
-      <button class="record-btn" id="recordBtn" aria-label="開始錄音">
-        <div class="ring-pulse"></div>
-        <div class="ring"></div>
-        <div class="core">
-          <svg class="icon-mic" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="9" y="2" width="6" height="12" rx="3" fill="#0a0a0f"/>
-            <path d="M5 10a7 7 0 0 0 14 0" stroke="#0a0a0f" stroke-width="2" stroke-linecap="round"/>
-            <line x1="12" y1="19" x2="12" y2="22" stroke="#0a0a0f" stroke-width="2" stroke-linecap="round"/>
-            <line x1="8" y1="22" x2="16" y2="22" stroke="#0a0a0f" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <div class="icon-stop"></div>
-        </div>
-      </button>
-      <div class="record-label" id="recordLabel">按下錄音</div>
-    </div>
-
-    <!-- Transcript -->
-    <div class="transcript-section">
-      <div class="transcript-header">
-        <span class="transcript-label">辨識結果</span>
-        <button class="copy-btn" id="copyBtn">複製</button>
+  <div class="record-area">
+    <div class="timer" id="timer">00:00</div>
+    <button class="record-btn" id="recordBtn">
+      <div class="ring-pulse"></div>
+      <div class="ring"></div>
+      <div class="core">
+        <svg class="icon-mic" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect x="9" y="2" width="6" height="12" rx="3" fill="#0a0a0f"/>
+          <path d="M5 10a7 7 0 0 0 14 0" stroke="#0a0a0f" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="19" x2="12" y2="22" stroke="#0a0a0f" stroke-width="2" stroke-linecap="round"/>
+          <line x1="8"  y1="22" x2="16" y2="22" stroke="#0a0a0f" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="icon-stop"></div>
       </div>
-      <div class="transcript-box" id="transcriptBox">
-        <div class="transcript-empty" id="transcriptEmpty">辨識結果將顯示在這裡</div>
-        <div class="transcript-text" id="transcriptText"></div>
-      </div>
+    </button>
+    <div class="record-label" id="recordLabel">按下錄音</div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="player-section" id="playerSection">
+    <div class="step-badge active"><div class="num">2</div>播放確認</div>
+    <audio id="audioPlayer" controls></audio>
+  </div>
+
+  <button class="convert-btn" id="convertBtn">▶ 開始轉換文字</button>
+  <div class="converting" id="convertingSpinner"><div class="spin"></div>辨識中，請對麥克風說話...</div>
+
+  <div class="transcript-section">
+    <div class="transcript-header">
+      <div class="step-badge" id="step3Badge"><div class="num">3</div>辨識結果</div>
+      <button class="copy-btn" id="copyBtn">複製</button>
     </div>
-
-    <!-- History -->
-    <div class="history-section" id="historySection" style="display:none">
-      <span class="history-label">歷史紀錄</span>
-      <div class="history-list" id="historyList"></div>
+    <div class="transcript-box">
+      <div class="transcript-empty" id="transcriptEmpty">轉換後文字將顯示在這裡</div>
+      <div class="transcript-text" id="transcriptText"></div>
     </div>
+  </div>
 
-  </main>
+  <div class="history-section" id="historySection">
+    <span class="history-label">歷史紀錄</span>
+    <div class="history-list" id="historyList"></div>
+  </div>
 
-  <script>
-    // ── DOM ──
-    const recordBtn = document.getElementById('recordBtn');
-    const recordLabel = document.getElementById('recordLabel');
-    const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('statusText');
-    const timerEl = document.getElementById('timer');
-    const transcriptText = document.getElementById('transcriptText');
-    const transcriptEmpty = document.getElementById('transcriptEmpty');
-    const transcriptBox = document.getElementById('transcriptBox');
-    const copyBtn = document.getElementById('copyBtn');
-    const waveformContainer = document.getElementById('waveformContainer');
-    const waveformPlaceholder = document.getElementById('waveformPlaceholder');
-    const historySection = document.getElementById('historySection');
-    const historyList = document.getElementById('historyList');
+</main>
+<script>
+  const recordBtn         = document.getElementById('recordBtn');
+  const recordLabel       = document.getElementById('recordLabel');
+  const timerEl           = document.getElementById('timer');
+  const waveformBox       = document.getElementById('waveformBox');
+  const waveformIdle      = document.getElementById('waveformIdle');
+  const playerSection     = document.getElementById('playerSection');
+  const audioPlayer       = document.getElementById('audioPlayer');
+  const convertBtn        = document.getElementById('convertBtn');
+  const convertingSpinner = document.getElementById('convertingSpinner');
+  const transcriptEmpty   = document.getElementById('transcriptEmpty');
+  const transcriptText    = document.getElementById('transcriptText');
+  const copyBtn           = document.getElementById('copyBtn');
+  const errorMsg          = document.getElementById('errorMsg');
+  const historySection    = document.getElementById('historySection');
+  const historyList       = document.getElementById('historyList');
+  const step3Badge        = document.getElementById('step3Badge');
 
-    // ── CHECK SUPPORT ──
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      document.getElementById('notSupported').style.display = 'block';
-      recordBtn.disabled = true;
-    }
+  // ── WAVEFORM ──
+  const bars = [];
+  let animFrame;
+  for (let i = 0; i < 44; i++) {
+    const b = document.createElement('div');
+    b.className = 'waveform-bar';
+    waveformBox.appendChild(b);
+    bars.push(b);
+  }
+  function startWave() {
+    waveformIdle.style.display = 'none';
+    (function loop(){
+      bars.forEach(b=>{ const h=6+Math.random()*68; b.style.height=h+'px'; b.classList.toggle('active',h>20); });
+      animFrame=requestAnimationFrame(loop);
+    })();
+  }
+  function stopWave() {
+    cancelAnimationFrame(animFrame);
+    bars.forEach(b=>{ b.style.height='6px'; b.classList.remove('active'); });
+    waveformIdle.style.display='';
+  }
 
-    // ── WAVEFORM ──
-    const BAR_COUNT = 48;
-    let waveformBars = [];
+  // ── TIMER ──
+  let timerInterval, secs=0;
+  function startTimer(){ secs=0; timerEl.textContent='00:00'; timerEl.classList.add('active'); timerInterval=setInterval(()=>{ secs++; timerEl.textContent=String(Math.floor(secs/60)).padStart(2,'0')+':'+String(secs%60).padStart(2,'0'); },1000); }
+  function stopTimer(){ clearInterval(timerInterval); timerEl.classList.remove('active'); }
 
-    function buildWaveform() {
-      // 清空但保留 placeholder 參考
-      waveformContainer.innerHTML = '';
-      for (let i = 0; i < BAR_COUNT; i++) {
-        const bar = document.createElement('div');
-        bar.className = 'waveform-bar';
-        waveformContainer.appendChild(bar);
-        waveformBars.push(bar);
-      }
-      // 重新加回 placeholder
-      const ph = document.createElement('div');
-      ph.className = 'waveform-placeholder';
-      ph.id = 'waveformPlaceholder';
-      ph.textContent = '點擊下方按鈕開始錄音';
-      waveformContainer.appendChild(ph);
-    }
-    buildWaveform();
+  // ── ERROR ──
+  function showError(m){ errorMsg.textContent=m; errorMsg.classList.add('visible'); }
+  function clearError(){ errorMsg.classList.remove('visible'); }
 
-    let animFrame;
-    let analyser, dataArray, audioCtx, micStream;
+  // ── RECORD ──
+  let mediaRecorder=null, chunks=[], audioBlob=null, isRecording=false;
 
-    function animateWaveform() {
-      if (!analyser) return;
-      analyser.getByteFrequencyData(dataArray);
-      waveformBars.forEach((bar, i) => {
-        const idx = Math.floor(i * dataArray.length / BAR_COUNT);
-        const val = dataArray[idx] / 255;
-        const h = 6 + val * 70;
-        bar.style.height = h + 'px';
-        bar.classList.toggle('active', val > 0.05);
-      });
-      animFrame = requestAnimationFrame(animateWaveform);
-    }
+  recordBtn.addEventListener('click', ()=>{ isRecording ? stopRecording() : startRecording(); });
 
-    function resetWaveform() {
-      cancelAnimationFrame(animFrame);
-      waveformBars.forEach(bar => {
-        bar.style.height = '6px';
-        bar.classList.remove('active');
-      });
-    }
+  async function startRecording(){
+    clearError(); chunks=[]; audioBlob=null;
+    playerSection.classList.remove('visible');
+    convertBtn.classList.remove('visible');
+    convertingSpinner.classList.remove('visible');
+    transcriptText.textContent='';
+    transcriptEmpty.style.display='flex';
+    transcriptEmpty.textContent='轉換後文字將顯示在這裡';
+    copyBtn.classList.remove('visible');
+    audioPlayer.src='';
+    step3Badge.classList.remove('active');
 
-    async function startVisualizer() {
-      const ph = document.getElementById('waveformPlaceholder');
-      if (ph) ph.style.display = 'none';
-      try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const source = audioCtx.createMediaStreamSource(micStream);
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 256;
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-        source.connect(analyser);
-        animateWaveform();
-      } catch(e) {
-        waveformBars.forEach(bar => {
-          bar.style.height = (6 + Math.random() * 30) + 'px';
-          bar.classList.add('active');
-        });
-      }
-    }
-
-    function stopVisualizer() {
-      cancelAnimationFrame(animFrame);
-      if (micStream) micStream.getTracks().forEach(t => t.stop());
-      if (audioCtx) audioCtx.close();
-      analyser = null;
-      resetWaveform();
-      const ph = document.getElementById('waveformPlaceholder');
-      if (ph) ph.style.display = '';
-    }
-
-    // ── TIMER ──
-    let timerInterval, seconds = 0;
-
-    function startTimer() {
-      seconds = 0;
-      timerEl.textContent = '00:00';
-      timerEl.classList.add('active');
-      timerInterval = setInterval(() => {
-        seconds++;
-        const m = String(Math.floor(seconds / 60)).padStart(2,'0');
-        const s = String(seconds % 60).padStart(2,'0');
-        timerEl.textContent = `${m}:${s}`;
-      }, 1000);
-    }
-
-    function stopTimer() {
-      clearInterval(timerInterval);
-      timerEl.classList.remove('active');
-    }
-
-    // ── STATUS ──
-    function setStatus(state) {
-      statusDot.className = 'status-indicator ' + state;
-      const labels = { '': '待機中', recording: '錄音中', processing: '辨識中...', done: '完成' };
-      statusText.textContent = labels[state] || '待機中';
-    }
-
-    // ── HISTORY ──
-    let history = JSON.parse(localStorage.getItem('vtt-history') || '[]');
-
-    function renderHistory() {
-      if (!history.length) { historySection.style.display = 'none'; return; }
-      historySection.style.display = 'flex';
-      historyList.innerHTML = '';
-      [...history].reverse().slice(0, 5).forEach(item => {
-        const el = document.createElement('div');
-        el.className = 'history-item';
-        el.innerHTML = `
-          <div class="history-item-text">${item.text}</div>
-          <div class="history-item-time">${item.time}</div>
-        `;
-        el.addEventListener('click', () => loadIntoTranscript(item.text));
-        historyList.appendChild(el);
-      });
-    }
-
-    function saveToHistory(text) {
-      const now = new Date();
-      const time = now.toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit' });
-      history.push({ text, time });
-      if (history.length > 20) history.shift();
-      localStorage.setItem('vtt-history', JSON.stringify(history));
-      renderHistory();
-    }
-
-    function loadIntoTranscript(text) {
-      transcriptText.innerHTML = `<span>${text}</span>`;
-      transcriptEmpty.style.display = 'none';
-      transcriptBox.classList.add('has-content');
-      copyBtn.classList.add('visible');
-    }
-
-    renderHistory();
-
-    // ── RECOGNITION ──
-    let isRecording = false;
-    let recognition;
-    let finalText = '';
-
-    function startRecording() {
-      isRecording = true;
-      finalText = '';
-      transcriptText.innerHTML = '';
-      transcriptEmpty.style.display = 'flex';
-      transcriptBox.classList.remove('has-content');
-      copyBtn.classList.remove('visible');
-
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const tryTypes=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4',''];
+      let mime='';
+      for(const t of tryTypes){ if(!t||MediaRecorder.isTypeSupported(t)){ mime=t; break; } }
+      mediaRecorder = new MediaRecorder(stream, mime ? {mimeType:mime} : {});
+      mediaRecorder.ondataavailable = e=>{ if(e.data&&e.data.size>0) chunks.push(e.data); };
+      mediaRecorder.onstop = ()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        if(!chunks.length){ showError('❌ 沒有錄到資料，請確認麥克風正常'); return; }
+        audioBlob = new Blob(chunks, {type: mime||'audio/webm'});
+        audioPlayer.src = URL.createObjectURL(audioBlob);
+        playerSection.classList.add('visible');
+        convertBtn.classList.add('visible');
+      };
+      mediaRecorder.start(500);
+      isRecording=true;
       recordBtn.classList.add('recording');
-      recordLabel.textContent = '點擊停止';
+      recordLabel.textContent='點擊停止';
       recordLabel.classList.add('recording');
-      setStatus('recording');
-      startTimer();
-      startVisualizer();
-
-      let restartCount = 0;
-      const MAX_RESTART = 5;
-
-      recognition = new SpeechRecognition();
-      recognition.lang = 'zh-TW';
-      recognition.interimResults = true;
-      recognition.continuous = true;
-      recognition.maxAlternatives = 1;
-
-      // 有說話時重置重啟計數
-      recognition.onresult = (e) => {
-        restartCount = 0;
-        let interim = '';
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          const t = e.results[i][0].transcript;
-          if (e.results[i].isFinal) finalText += t;
-          else interim += t;
-        }
-        transcriptEmpty.style.display = 'none';
-        transcriptText.innerHTML =
-          '<span>' + finalText + '</span>' +
-          (interim ? '<span class="interim-text">' + interim + '</span>' : '');
-      };
-
-      // no-speech / network 不立即重啟，等候較長時間，避免頻繁觸發提示音
-      recognition.onerror = (e) => {
-        if (e.error === 'aborted') return;
-        if (e.error === 'no-speech') return; // onend 會處理重啟
-        if (e.error === 'network') {
-          if (isRecording && restartCount < MAX_RESTART) {
-            restartCount++;
-            setTimeout(() => { try { recognition.start(); } catch(err) {} }, 2500);
-          } else if (isRecording) {
-            transcriptEmpty.style.display = 'none';
-            transcriptText.innerHTML = '<span style="color:#f0c864;font-size:0.9rem">⚠️ 網路不穩，請停止後重新錄音</span>';
-          }
-          return;
-        }
-        if (e.error === 'not-allowed') {
-          transcriptEmpty.style.display = 'none';
-          transcriptText.innerHTML = '<span style="color:#f06464;font-size:0.9rem">⚠️ 麥克風權限被拒絕</span>';
-        }
-        stopRecording();
-      };
-
-      // onend：靜音超時後重啟，加長延遲減少提示音
-      recognition.onend = () => {
-        if (!isRecording) return;
-        if (restartCount < MAX_RESTART) {
-          restartCount++;
-          setTimeout(() => { try { recognition.start(); } catch(err) {} }, 800);
-        } else {
-          // 達上限後冷卻 2 秒再重啟，並重置計數
-          restartCount = 0;
-          setTimeout(() => { try { recognition.start(); } catch(err) {} }, 2000);
-        }
-      };
-
-      recognition.start();
+      startTimer(); startWave();
+    } catch(e){
+      if(e.name==='NotAllowedError') showError('❌ 麥克風權限被拒絕，請在網址列允許麥克風');
+      else if(e.name==='NotFoundError') showError('❌ 找不到麥克風裝置');
+      else showError('❌ 錯誤：'+e.message);
     }
+  }
 
-    function stopRecording() {
-      isRecording = false;
-      if (recognition) { recognition.onend = null; recognition.stop(); }
-      recordBtn.classList.remove('recording');
-      recordLabel.textContent = '按下錄音';
-      recordLabel.classList.remove('recording');
-      setStatus('done');
-      stopTimer();
-      stopVisualizer();
+  function stopRecording(){
+    if(mediaRecorder&&mediaRecorder.state!=='inactive') mediaRecorder.stop();
+    isRecording=false;
+    recordBtn.classList.remove('recording');
+    recordLabel.textContent='重新錄音';
+    recordLabel.classList.remove('recording');
+    stopTimer(); stopWave();
+  }
 
-      if (finalText.trim()) {
-        transcriptBox.classList.add('has-content');
+  // ── CONVERT ──
+  convertBtn.addEventListener('click', ()=>{
+    if(!audioBlob) return;
+    const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){ showError('❌ 此瀏覽器不支援語音辨識，請使用 Chrome'); return; }
+
+    convertBtn.disabled=true;
+    convertingSpinner.classList.add('visible');
+    transcriptText.textContent='';
+    transcriptEmpty.style.display='flex';
+    transcriptEmpty.textContent='🎙 請對著麥克風說出剛才錄音的內容...';
+    copyBtn.classList.remove('visible');
+    clearError();
+
+    const r = new SR();
+    r.lang='zh-TW';
+    r.interimResults=true;
+    r.continuous=false;
+    r.maxAlternatives=1;
+
+    let final='';
+
+    r.onresult = e=>{
+      let interim='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal) final+=e.results[i][0].transcript;
+        else interim+=e.results[i][0].transcript;
+      }
+      transcriptEmpty.style.display='none';
+      transcriptText.textContent = final + (interim ? ' '+interim : '');
+    };
+
+    r.onend = ()=>{
+      convertBtn.disabled=false;
+      convertingSpinner.classList.remove('visible');
+      if(final.trim()){
+        transcriptText.textContent=final.trim();
+        transcriptEmpty.style.display='none';
         copyBtn.classList.add('visible');
-        saveToHistory(finalText.trim());
-      } else {
-        transcriptEmpty.style.display = 'flex';
+        step3Badge.classList.add('active');
+        saveToHistory(final.trim());
+      } else if(!transcriptText.textContent){
+        transcriptEmpty.style.display='flex';
+        transcriptEmpty.textContent='轉換後文字將顯示在這裡';
+        showError('⚠️ 沒有辨識到文字，請重試');
       }
+    };
 
-      setTimeout(() => setStatus(''), 3000);
-    }
+    r.onerror = e=>{
+      convertBtn.disabled=false;
+      convertingSpinner.classList.remove('visible');
+      transcriptEmpty.style.display='flex';
+      transcriptEmpty.textContent='轉換後文字將顯示在這裡';
+      if(e.error==='not-allowed') showError('❌ 麥克風權限被拒絕');
+      else if(e.error==='network') showError('❌ 網路錯誤，請確認網路後重試');
+      else if(e.error==='no-speech') showError('⚠️ 沒有偵測到聲音，請重試');
+      else showError('❌ 辨識錯誤：'+e.error);
+    };
 
-    recordBtn.addEventListener('click', () => {
-      if (!SpeechRecognition) return;
-      isRecording ? stopRecording() : startRecording();
+    r.start();
+  });
+
+  // ── COPY ──
+  copyBtn.addEventListener('click', async ()=>{
+    const text=transcriptText.textContent.trim();
+    if(!text) return;
+    try{ await navigator.clipboard.writeText(text); }
+    catch(e){ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+    copyBtn.textContent='已複製 ✓'; copyBtn.classList.add('copied');
+    setTimeout(()=>{ copyBtn.textContent='複製'; copyBtn.classList.remove('copied'); },2000);
+  });
+
+  // ── HISTORY ──
+  let history=[];
+  try{ history=JSON.parse(localStorage.getItem('vtt-history')||'[]'); }catch(e){}
+
+  function renderHistory(){
+    if(!history.length){ historySection.classList.remove('visible'); return; }
+    historySection.classList.add('visible');
+    historyList.innerHTML='';
+    [...history].reverse().slice(0,5).forEach(item=>{
+      const el=document.createElement('div');
+      el.className='history-item';
+      el.innerHTML='<div class="history-item-text">'+item.text+'</div><div class="history-item-time">'+item.time+'</div>';
+      el.addEventListener('click',()=>{ transcriptText.textContent=item.text; transcriptEmpty.style.display='none'; copyBtn.classList.add('visible'); });
+      historyList.appendChild(el);
     });
+  }
 
-    // ── COPY ──
-    copyBtn.addEventListener('click', async () => {
-      const text = finalText.trim() || transcriptText.innerText;
-      if (!text) return;
-      await navigator.clipboard.writeText(text);
-      copyBtn.textContent = '已複製 ✓';
-      copyBtn.classList.add('copied');
-      setTimeout(() => {
-        copyBtn.textContent = '複製';
-        copyBtn.classList.remove('copied');
-      }, 2000);
-    });
+  function saveToHistory(text){
+    const time=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+    history.push({text,time});
+    if(history.length>20) history.shift();
+    try{ localStorage.setItem('vtt-history',JSON.stringify(history)); }catch(e){}
+    renderHistory();
+  }
 
-    // ── PWA INSTALL ──
-    let deferredPrompt;
-    const installBanner = document.getElementById('installBanner');
-    const installBtn = document.getElementById('installBtn');
-    const dismissBtn = document.getElementById('dismissBtn');
+  renderHistory();
 
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      if (!localStorage.getItem('pwa-dismissed')) {
-        installBanner.classList.add('visible');
-      }
-    });
-
-    installBtn.addEventListener('click', async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      const result = await deferredPrompt.userChoice;
-      deferredPrompt = null;
-      installBanner.classList.remove('visible');
-    });
-
-    dismissBtn.addEventListener('click', () => {
-      installBanner.classList.remove('visible');
-      localStorage.setItem('pwa-dismissed', '1');
-    });
-
-    // ── SERVICE WORKER ──
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
-  </script>
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
 </body>
 </html>
